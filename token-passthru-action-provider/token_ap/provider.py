@@ -5,7 +5,7 @@ import logging
 import os
 
 from token_ap.database import db
-from flask import Blueprint, Flask
+from flask import Blueprint, Flask, app
 from globus_action_provider_tools import (
     ActionProviderDescription,
     ActionRequest,
@@ -30,14 +30,43 @@ def load_schema():
     return schema
 
 
+def auth_to_userinfo(auth: AuthState):
+    token_info = auth.introspect_token().data
+    client = dict()
+    attributes = list()
+    userinfo = dict()
+
+    client["id"] = token_info["iss"] + "/" + token_info["sub"]
+    mapping = {"display_name": "username",
+               "full_name": "name",
+               "email": "email",
+               "identities": "identity_set"}
+ 
+    for k,v in mapping.items():
+        client[k] = token_info[v]
+
+    groups_client = auth._get_groups_client()
+    groups = groups_client.list_groups()
+    for group in groups:
+        attributes.append({"id": token_info["iss"] + "/" + group['id'],
+                           "display_name": group.get("name")})
+    attributes.append(client)
+    userinfo.update({'client': client})
+    userinfo.update({'attributes': attributes})
+
+    return json.dumps(userinfo)
+
+
 def action_run(request: ActionRequest, auth: AuthState) -> ActionCallbackReturn:
     action_id = db.query(request.request_id)
     caller_id = auth.effective_identity
+
     if action_id is not None:
-        app.logger.debug(f"action_id {action_id} already exists")
         return action_status(action_id, auth)
 
-    result_details = {"token": auth.bearer_token}
+    userinfo = json.dumps(auth_to_userinfo(auth))
+    result_details = {"userinfo": userinfo}
+
     status = ActionStatus(
         status=ActionStatusValue.SUCCEEDED,
         creator_id=caller_id or "UNKNOWN",
@@ -128,7 +157,7 @@ def create_app():
 
 
 def main():
-    create_app()
+    app = create_app()
     app.run(debug=True, port=5001, threaded=False)
 
 

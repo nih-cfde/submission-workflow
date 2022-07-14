@@ -4,8 +4,9 @@ import pickle
 
 
 class Database:
-    database_directory = os.path.dirname(os.path.abspath(__file__))
-    filename = os.path.join(database_directory, "token_db")
+    filename = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "passthru_action_provider"
+    )
 
     def persist(self, key, value):
         with dbm.open(self.filename, "c") as datab:

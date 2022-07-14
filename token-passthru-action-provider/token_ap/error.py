@@ -40,3 +40,12 @@ class InvalidState(ApiError):
 
 class InternalError(ApiError):
     status = 500
+
+
+class ServiceError(ApiError):
+    """
+    Dependent service returned an unexpected error.
+    Ex. DynamoDB failed to read (different from not found).
+    Functionally identical to InternalError except for debugging,
+    because an internal service error is still an internal error.
+    """
