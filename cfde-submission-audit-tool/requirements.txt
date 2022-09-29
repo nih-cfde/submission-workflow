@@ -1,0 +1,4 @@
+globus_sdk
+pandas
+xlsxwriter
+git+https://github.com/nih-cfde/cfde-deriva.git#egg=cfde-deriva
