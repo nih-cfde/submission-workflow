@@ -54,7 +54,8 @@ def auth_to_userinfo(auth: AuthState):
     userinfo.update({'client': client})
     userinfo.update({'attributes': attributes})
 
-    return json.dumps(userinfo)
+    # return json.dumps(userinfo)
+    return userinfo
 
 
 def action_run(request: ActionRequest, auth: AuthState) -> ActionCallbackReturn:
@@ -64,7 +65,7 @@ def action_run(request: ActionRequest, auth: AuthState) -> ActionCallbackReturn:
     if action_id is not None:
         return action_status(action_id, auth)
 
-    userinfo = json.dumps(auth_to_userinfo(auth))
+    userinfo = auth_to_userinfo(auth)
     result_details = {"userinfo": userinfo}
 
     status = ActionStatus(
